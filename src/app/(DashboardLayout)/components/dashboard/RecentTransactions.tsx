@@ -10,79 +10,96 @@ import {
     TimelineContent,
     timelineOppositeContentClasses,
 } from '@mui/lab';
-import { Typography } from '@mui/material';
+import { Typography, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, Alert } from '@mui/material';
 
-// 定义接口返回的数据类型
-type Transaction = {
+// Define feedback data type
+type Feedback = {
     time: string;
     context: string;
     username: string;
+    feedbackId: string;
+    userid: string;
 };
 
 const RecentTransactions = () => {
-    // 用于保存获取的交易数据
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);  // 加载状态
+    const [transactions, setTransactions] = useState<Feedback[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+        open: false,
+        message: '',
+        severity: 'success',
+    });
 
-    // 辅助函数：格式化时间
-    // 如果是当天的时间，仅显示 HH:mm:ss，否则仅显示 YYYY/MM/DD
     const formatTransactionTime = (timestamp: string) => {
         const date = new Date(timestamp);
         const now = new Date();
 
-        // 判断年份、月份和日期是否相同
-        if (
-            date.getFullYear() === now.getFullYear() &&
-            date.getMonth() === now.getMonth() &&
-            date.getDate() === now.getDate()
-        ) {
-            // 返回时间部分
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
+        if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate()) {
+            return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
         } else {
-            // 返回日期部分，格式为 YYYY/MM/DD
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}/${month}/${day}`;
+            return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
         }
     };
 
-    // 请求后端接口并获取数据
     useEffect(() => {
         const fetchTransactions = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/feedback/getAllFeedbacks'); // 替换成你的实际 API 地址
+                const response = await fetch('http://47.130.87.217:9090/api/feedback/getAllFeedbacks');
                 const data = await response.json();
-                setTransactions(data);  // 将数据存入 state
+                setTransactions(data);
             } catch (error) {
                 console.error('Failed to fetch transactions:', error);
             } finally {
-                setLoading(false);  // 请求完成，更新加载状态
+                setLoading(false);
             }
         };
 
-        fetchTransactions();  // 调用请求函数
+        fetchTransactions();
     }, []);
 
+    const handleDeleteClick = (feedbackId: string) => {
+        setDeleteId(feedbackId);
+        setOpenConfirmDialog(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteId) return;
+
+        try {
+            const response = await fetch(`http://47.130.87.217:9090/api/feedback/${deleteId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.status === 204) {
+                setTransactions((prev) => prev.filter((item) => item.feedbackId !== deleteId));
+                setSnackbar({ open: true, message: 'Successfully deleted', severity: 'success' });
+            } else {
+                setSnackbar({ open: true, message: 'Failed to delete, feedback not found', severity: 'error' });
+            }
+        } catch (error) {
+            setSnackbar({ open: true, message: 'Deletion failed, please try again later', severity: 'error' });
+        } finally {
+            setOpenConfirmDialog(false);
+            setDeleteId(null);
+        }
+    };
+
     if (loading) {
-        return <div>Loading...</div>;  // 数据加载时显示 Loading
+        return <div>Loading...</div>;
     }
 
+    // @ts-ignore
     return (
         <DashboardCard title="Recent Feedback">
             <Timeline
                 className="theme-timeline"
-                nonce={undefined}
-                onResize={undefined}
-                onResizeCapture={undefined}
                 sx={{
                     p: 0,
                     mb: '-40px',
-                    maxHeight: '415px',  // 限制最大高度
-                    overflowY: 'auto',  // 启用垂直滚动
+                    maxHeight: '415px',
+                    overflowY: 'auto',
                     height: '415px',
                     '& .MuiTimelineConnector-root': {
                         width: '1px',
@@ -92,35 +109,33 @@ const RecentTransactions = () => {
                         flex: 0.5,
                         paddingLeft: 0,
                     },
-                    // 隐藏滚动条
                     '&::-webkit-scrollbar': {
                         display: 'none',
                     },
-                    // 对非Webkit浏览器的兼容
-                    '-ms-overflow-style': 'none', // Internet Explorer 10+
-                    'scrollbar-width': 'none', // Firefox
+                    '-ms-overflow-style': 'none',
+                    'scrollbar-width': 'none',
                 }}
             >
                 {transactions.map((transaction, index) => (
                     <TimelineItem key={index}>
                         <TimelineOppositeContent>
-                            {formatTransactionTime(transaction.time)}
+                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                {formatTransactionTime(transaction.time)}
+                            </Typography>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                onClick={() => handleDeleteClick(transaction.feedbackId)}
+                            >
+                                Delete
+                            </Button>
                         </TimelineOppositeContent>
                         <TimelineSeparator>
                             <TimelineDot color="primary" variant="outlined" />
                             <TimelineConnector />
                         </TimelineSeparator>
-                        <TimelineContent
-                            sx={{
-                                maxHeight: '100px',  // 限制最大高度
-                                overflowY: 'auto',   // 启用垂直滚动
-                                '&::-webkit-scrollbar': {
-                                    display: 'none',  // 隐藏滚动条
-                                },
-                                '-ms-overflow-style': 'none', // 对 IE 10+ 兼容
-                                'scrollbar-width': 'none',  // 对 Firefox 兼容
-                            }}
-                        >
+                        <TimelineContent>
                             <Typography variant="body2">
                                 <strong>{transaction.username}</strong>: {transaction.context}
                             </Typography>
@@ -128,6 +143,25 @@ const RecentTransactions = () => {
                     </TimelineItem>
                 ))}
             </Timeline>
+
+            <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>Are you sure you want to delete this feedback? This action cannot be undone.</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenConfirmDialog(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDelete} color="error">
+                        Confirm Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+                <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+            </Snackbar>
         </DashboardCard>
     );
 };
