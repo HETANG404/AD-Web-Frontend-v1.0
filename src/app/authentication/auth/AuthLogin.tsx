@@ -45,6 +45,7 @@ const AuthLogin = ({ title, subtitle, subtext }: loginType) => {
     try {
       const response = await axios.post(
           "http://47.130.87.217:9090/api/admin/login",
+          // "http://localhost:8080/api/admin/login",
           { username, password },
           { headers: { "Content-Type": "application/json" } }
       );

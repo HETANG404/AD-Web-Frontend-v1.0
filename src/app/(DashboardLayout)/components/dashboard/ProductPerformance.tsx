@@ -34,6 +34,7 @@ const ProductPerformance = () => {
         const fetchData = async () => {
             try {
                 const response = await fetch('http://47.130.87.217:9090/api/restaurants/getTop5');
+                // const response = await fetch('http://localhost:8080/api/restaurants/getTop5');
                 if (!response.ok) {
                     throw new Error('Failed to fetch data');
                 }

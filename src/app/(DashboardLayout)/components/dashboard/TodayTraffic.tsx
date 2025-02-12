@@ -4,7 +4,8 @@ import { Stack, Typography, Avatar, Fab } from '@mui/material';
 import { IconArrowUpRight, IconArrowDownRight, IconTrafficLights } from '@tabler/icons-react';
 import DashboardCard from '@/app/(DashboardLayout)/components/shared/DashboardCard';
 import { useEffect, useState } from 'react';
-import { useTheme } from "@mui/material/styles";
+import {useTheme} from "@mui/material/styles";
+
 
 const TodayTraffic = () => {
     const [todayLogin, setTodayLogin] = useState<number | null>(null);
@@ -12,9 +13,12 @@ const TodayTraffic = () => {
     const [growthPercentage, setGrowthPercentage] = useState<number | null>(null);
     const [trafficData7Days, setTrafficData7Days] = useState<{ date: string, value: number }[]>([]);
 
+    const theme = useTheme();
+
     const fetchTrafficData = async () => {
         try {
             const response = await fetch('http://47.130.87.217:9090/api/loginStats');
+            // const response = await fetch('http://localhost:8080/api/loginStats');
             const data = await response.json();
 
             setTodayLogin(data.todayLogin);
@@ -50,7 +54,7 @@ const TodayTraffic = () => {
         return <div>Loading...</div>;
     }
 
-    const theme = useTheme();
+
     const secondary = theme.palette.secondary.main;
     const secondarylight = '#f5fcff';
     const successlight = '#e1f5e0';

@@ -25,6 +25,7 @@ interface User {
 }
 
 const API_BASE_URL = "http://47.130.87.217:9090/api/user";
+// const API_BASE_URL = "http://localhost:8080/api/user";
 
 const TypographyPage = () => {
   const [users, setUsers] = useState<User[]>([]);

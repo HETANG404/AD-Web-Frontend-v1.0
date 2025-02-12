@@ -24,6 +24,7 @@ const fetchChartData = async (selectedMonth: string): Promise<{ categories: stri
     try {
         const [year, month] = selectedMonth.split('-');
         const response = await fetch(`http://47.130.87.217:9090/api/getLastSevenMonthsData/${year}/${month}`);
+        // const response = await fetch(`http://localhost:8080/api/getLastSevenMonthsData/${year}/${month}`);
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
