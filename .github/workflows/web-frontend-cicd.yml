@@ -59,4 +59,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/web-frontend:latest
             docker run -d --name web-frontend -p 3000:3000 ${{ secrets.DOCKER_USERNAME }}/web-frontend:latest
             
-            docker start mobile-backend
+            docker start mobile-frontend
